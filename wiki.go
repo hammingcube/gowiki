@@ -1,9 +1,19 @@
 package main
 import (
+	"os"
+	"path/filepath"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
+)
+
+var (
+	gopath = os.Getenv("GOPATH")
+	dataDir = filepath.Join(os.Getenv("HOME"), "gowikidata")
+	srcdir = "github.com/maddyonline/gowiki"
+	localTemplDir = "/src/" + srcdir + "/static/templates" 
+	templatesdir = filepath.Join(gopath, localTemplDir)
 )
 
 type Page struct {
@@ -26,7 +36,9 @@ func loadPage(title string) (*Page, error) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	t, err := template.ParseFiles(tmpl + ".html")
+	tmplFile := filepath.Join(templatesdir, tmpl + ".html")
+	fmt.Println(tmplFile)
+	t, err := template.ParseFiles(tmplFile)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -73,7 +85,21 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
+func switchToDataDir() {
+	if _, err := os.Stat(dataDir); err != nil {
+    	if os.IsNotExist(err) {
+    		if err := os.Mkdir(dataDir, 0755); err != nil {
+    			fmt.Println("something went wrong!")
+    		}
+    	}
+    }
+    os.Chdir(dataDir)
+}
+
+
 func main() {
+	switchToDataDir()
+	fmt.Println(templatesdir)
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
