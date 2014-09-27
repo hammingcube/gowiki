@@ -1,0 +1,5 @@
+{
+	"ImportPath": "github.com/maddyonline/gowiki",
+	"GoVersion": "go1.3",
+	"Deps": []
+}
