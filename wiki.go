@@ -6,28 +6,17 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"flag"
 )
 
-var (
-	gopath = os.Getenv("GOPATH")
-	dataDir = filepath.Join(os.Getenv("HOME"), "gowikidata")
-	srcdir = "github.com/maddyonline/gowiki"
-	localTemplDir = "/src/" + srcdir + "/static/templates" 
-	templatesdir = filepath.Join(gopath, localTemplDir)
-)
 
-type Page struct {
-	Title string
-	Body []byte
-}
-
-func (p *Page) save() error {
-	filename := p.Title + ".txt"
+func savePage(p *Page, dir string) error {
+	filename := filepath.Join(dir, p.Title + ".txt")
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
-func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+func loadPage(title string, dir string) (*Page, error) {
+	filename := filepath.Join(dir, title + ".txt")
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -36,7 +25,7 @@ func loadPage(title string) (*Page, error) {
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
-	tmplFile := filepath.Join(templatesdir, tmpl + ".html")
+	tmplFile := filepath.Join(TemplatePath, tmpl + ".html")
 	fmt.Println(tmplFile)
 	t, err := template.ParseFiles(tmplFile)
 	if err != nil {
@@ -73,7 +62,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/save/"):]
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save()
+	err := savePage(p, ContentPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -81,30 +70,31 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
 
-func switchToDataDir() {
-	if _, err := os.Stat(dataDir); err != nil {
-    	if os.IsNotExist(err) {
-    		if err := os.Mkdir(dataDir, 0755); err != nil {
-    			fmt.Println("something went wrong!")
-    		}
-    	}
-    }
-    os.Chdir(dataDir)
+
+var (
+	GoPath = os.Getenv("GOPATH")
+	ContentPath = GoPath + '.data/'
+	SrcPath = "github.com/maddyonline/gowiki"
+	TemplatePath = GoPath + "/src/" + SrcPath + "/static/templates" 
+)
+
+func init() {
+	flag.StringVar(&dataDir, "datadir", filepath.Join(os.Getenv("HOME"), "gowikidata"), "Directory to store/retrieve blog posts")
 }
 
 
 func main() {
+	flag.Parse()
+	fmt.Println(filepath.Join(dataDir, "abc.txt"))
+	return
 	switchToDataDir()
-	fmt.Println(templatesdir)
+	fmt.Println(TemplatePath)
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
 	http.HandleFunc("/save/", saveHandler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8999", nil)
 }
 
 
