@@ -1,0 +1,24 @@
+<h1> Welcome to my blog</h1>
+
+<script>
+function urlGen(f){
+   var i1 = '/edit/';
+   var i2 = f.titleInput.value;
+   f.action = i1 + i2;
+   return true;
+}
+</script>
+
+
+
+<form action="/edit/title" method="POST" onSubmit="urlGen(this);">
+	<div><input id="titleInput" name="titleInput" type="text" value="Some cool title"> </div>
+	<div><input type="submit" value="New Post"> </div>
+</form>
+
+<h2>Archives</h2>
+<ol>
+	{{range $index, $element := .}}
+    	<li><a href="/view/{{$element.Title}}">{{ $element.Title }} </a> </li>
+	{{ end }}
+</ol>
