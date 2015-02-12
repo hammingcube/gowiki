@@ -106,7 +106,8 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 var (
 	GoPath = os.Getenv("GOPATH")
 	ContentPath = GoPath + "/src/github.com/maddyonline/gowiki/.data/"
-	TemplatePath = GoPath + "/src/github.com/maddyonline/gowiki/static/templates" 
+	TemplatePath = GoPath + "/src/github.com/maddyonline/gowiki/static/templates"
+	VendorPath = GoPath + "/src/github.com/maddyonline/gowiki/static/vendor"
 )
 
 func main() {
@@ -116,6 +117,8 @@ func main() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
 	http.HandleFunc("/save/", saveHandler)
+	http.Handle("/vendor/", http.StripPrefix("/vendor", http.FileServer(http.Dir(VendorPath))))
+
 	http.ListenAndServe(":8999", nil)
 }
 
