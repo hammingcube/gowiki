@@ -6,6 +6,11 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"go/build"
+)
+
+const (
+	packagePath = "github.com/maddyonline/gowiki"
 )
 
 type Page struct {
@@ -105,6 +110,8 @@ var (
 )
 
 func main() {
+	p, _ := build.Default.Import(packagePath, "", build.FindOnly)
+	fmt.Println(p.Dir)
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
